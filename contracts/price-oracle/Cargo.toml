@@ -1,0 +1,20 @@
+[package]
+name = "price-oracle"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+soroban-sdk = "21.7.7"
+
+[dev-dependencies]
+soroban-sdk = { version = "21.7.7", features = ["testutils"] }
+
+[features]
+testutils = ["soroban-sdk/testutils"]
+
+[[bin]]
+name = "price-oracle"
+path = "src/bin/price-oracle.rs"

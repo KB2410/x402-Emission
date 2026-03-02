@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7B61FF, #3E1BDB);
+  border-radius: 4px;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Option card styles */
+.option-card {
+  background: linear-gradient(145deg, rgba(62, 27, 219, 0.1), rgba(0, 194, 255, 0.05));
+  border: 1px solid rgba(123, 97, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.option-card:hover {
+  border-color: rgba(123, 97, 255, 0.5);
+  box-shadow: 0 0 30px rgba(123, 97, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Call option accent */
+.call-option {
+  border-left: 3px solid #10B981;
+}
+
+/* Put option accent */
+.put-option {
+  border-left: 3px solid #EF4444;
+}
+
+/* Button gradients */
+.btn-primary {
+  background: linear-gradient(135deg, #3E1BDB, #7B61FF);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #4E2BEB, #8B71FF);
+  box-shadow: 0 0 20px rgba(123, 97, 255, 0.4);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #059669, #10B981);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #DC2626, #EF4444);
+}
+
+/* Stats card */
+.stat-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+
+
+/* Table styles */
+.option-table th {
+  background: rgba(123, 97, 255, 0.1);
+  border-bottom: 1px solid rgba(123, 97, 255, 0.2);
+}
+
+.option-table tr:hover {
+  background: rgba(123, 97, 255, 0.05);
+}
+
+/* Input styles */
+.input-field {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: #7B61FF;
+  box-shadow: 0 0 0 2px rgba(123, 97, 255, 0.2);
+  outline: none;
+}
+
+/* Price display */
+.price-up {
+  color: #10B981;
+}
+
+.price-down {
+  color: #EF4444;
+}
+
+/* Loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.1) 50%,
+      rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    /* Dark background by default */
+    --foreground: 0 0% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
