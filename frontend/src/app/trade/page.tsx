@@ -51,14 +51,14 @@ export default function TradePage() {
     const [isLoading, setIsLoading] = useState(true)
     const [options, setOptions] = useState<EmissionOption[]>([])
     const [userPublicKey, setUserPublicKey] = useState<string | null>(null)
-    const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean }>({
+    const [toast, setToast] = useState<{ message: string; type: ToastType; isVisible: boolean; txHash?: string }>({
         message: '',
         type: 'success',
         isVisible: false
     })
 
-    const showToast = (message: string, type: ToastType) => {
-        setToast({ message, type, isVisible: true })
+    const showToast = (message: string, type: ToastType, txHash?: string) => {
+        setToast({ message, type, isVisible: true, txHash })
     }
 
     const hideToast = () => {
@@ -157,8 +157,9 @@ export default function TradePage() {
             setAmount('')
 
             showToast(
-                `Option purchased successfully! Transaction: ${txHash.slice(0, 8)}...`,
-                'success'
+                `Option purchased successfully! Tx: ${txHash.slice(0, 8)}...`,
+                'success',
+                txHash
             )
 
             // Refresh options data
@@ -483,6 +484,7 @@ export default function TradePage() {
                 type={toast.type}
                 isVisible={toast.isVisible}
                 onClose={hideToast}
+                txHash={toast.txHash}
             />
         </main>
     )

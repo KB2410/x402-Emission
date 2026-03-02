@@ -2,7 +2,7 @@
 
 use soroban_sdk::{
     contract, contractimpl, contracttype, contracterror, 
-    symbol_short, Address, Env, Map, Symbol, Vec, log,
+    symbol_short, Address, Env, IntoVal, Map, Symbol, Vec, log,
     token::TokenClient,
 };
 
@@ -150,20 +150,18 @@ impl EmissionOptionContract {
             return Err(Error::InvalidExpiration);
         }
 
-        // Lock collateral through CollateralManager instead of direct transfer
+        // Lock collateral through CollateralManager via cross-contract call
         let collateral_manager: Address = env.storage().instance()
             .get(&DataKey::CollateralManager)
             .ok_or(Error::NotInitialized)?;
 
-        // Call CollateralManager to lock collateral
-        // In production, this would be a cross-contract call
-        // For now, we'll do direct transfer as fallback
-        let collateral_token: Address = env.storage().instance()
-            .get(&DataKey::CollateralToken)
-            .ok_or(Error::NotInitialized)?;
-        
-        let token_client = TokenClient::new(&env, &collateral_token);
-        token_client.transfer(&writer, &env.current_contract_address(), &collateral_amount);
+        // Invoke lock_collateral on the CollateralManager contract
+        // CollateralManager.lock_collateral(caller: Address, user: Address, amount: i128)
+        env.invoke_contract::<()>(
+            &collateral_manager,
+            &Symbol::new(&env, "lock_collateral"),
+            (env.current_contract_address(), writer.clone(), collateral_amount).into_val(&env),
+        );
 
         // Update total collateral
         let total_collateral: i128 = env.storage().instance()

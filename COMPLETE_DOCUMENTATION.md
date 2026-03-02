@@ -1189,6 +1189,55 @@ try {
 7. **Rate Limit Tuning**: Adjust rate limits based on usage patterns
 8. **CSP Tuning**: Tighten CSP as much as possible
 
+### Admin Decentralization — Multisig Setup
+
+> **Why?** A single admin key controlling all contracts is a centralization risk. If that key is compromised, all contracts can be manipulated.
+
+#### Step 1: Create a Multisig Stellar Account
+
+Instead of using a single developer's key as the `admin` in `initialize()`, create a standard Stellar account and add multiple signers:
+
+```bash
+# 1. Create the multisig admin account
+stellar keys generate multisig-admin --network testnet
+stellar keys fund multisig-admin --network testnet
+
+# 2. Get the multisig admin public key
+MULTISIG_ADMIN=$(stellar keys address multisig-admin)
+echo "Multisig admin: $MULTISIG_ADMIN"
+
+# 3. Add additional signers (e.g., 3 team members)
+stellar tx new set-options \
+  --source multisig-admin \
+  --signer "SIGNER_PUBLIC_KEY_1:1" \
+  --signer "SIGNER_PUBLIC_KEY_2:1" \
+  --signer "SIGNER_PUBLIC_KEY_3:1" \
+  --med-threshold 2 \
+  --high-threshold 2 \
+  --network testnet
+
+# This requires 2-of-3 signers for medium/high threshold operations
+```
+
+#### Step 2: Use Multisig Admin in Deployment
+
+Pass the multisig account address to `initialize.sh`:
+
+```bash
+export STELLAR_SECRET_KEY="YOUR_STELLAR_SECRET_KEY_HERE"
+export ADMIN_ADDRESS="$MULTISIG_ADMIN"   # Use multisig account
+./scripts/initialize.sh
+```
+
+#### Step 3: Future — On-Chain DAO Governance
+
+For full decentralization, deploy a separate **Governance Soroban contract**:
+
+1. Set the `EmissionOptionContract` admin to the Governance contract's address
+2. Parameter changes go through a `propose → vote → execute` workflow
+3. Token holders vote on proposals with a quorum requirement
+4. Timelock delay between approval and execution for safety
+
 ### Files Modified for Security
 
 **New Files Created**:

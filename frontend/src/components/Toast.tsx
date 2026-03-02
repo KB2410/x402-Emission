@@ -10,14 +10,15 @@ interface ToastProps {
     type: ToastType
     isVisible: boolean
     onClose: () => void
+    txHash?: string
 }
 
-export default function Toast({ message, type, isVisible, onClose }: ToastProps) {
+export default function Toast({ message, type, isVisible, onClose, txHash }: ToastProps) {
     useEffect(() => {
         if (isVisible) {
             const timer = setTimeout(() => {
                 onClose()
-            }, 3000)
+            }, 5000)
             return () => clearTimeout(timer)
         }
     }, [isVisible, onClose])
@@ -46,6 +47,8 @@ export default function Toast({ message, type, isVisible, onClose }: ToastProps)
         )
     }
 
+    const isDemoHash = txHash?.startsWith('demo_tx_')
+
     return (
         <AnimatePresence>
             {isVisible && (
@@ -53,17 +56,38 @@ export default function Toast({ message, type, isVisible, onClose }: ToastProps)
                     initial={{ opacity: 0, y: 50, scale: 0.9 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                    className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-xl backdrop-blur-md border shadow-xl ${bgColors[type]}`}
+                    className={`fixed bottom-6 right-6 z-50 flex flex-col gap-2 px-6 py-4 rounded-xl backdrop-blur-md border shadow-xl max-w-sm ${bgColors[type]}`}
                 >
-                    {icons[type]}
-                    <span className="font-medium text-sm">{message}</span>
-                    <button onClick={onClose} className="ml-4 hover:opacity-70">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {icons[type]}
+                        <span className="font-medium text-sm">{message}</span>
+                        <button onClick={onClose} className="ml-4 hover:opacity-70">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    {txHash && (
+                        <div className="pl-8">
+                            {!isDemoHash ? (
+                                <a
+                                    href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs text-stellar-purple hover:text-white underline transition"
+                                >
+                                    View on Stellar Expert →
+                                </a>
+                            ) : (
+                                <span className="text-xs text-gray-500 italic">
+                                    (Demo Mode — Simulated Transaction)
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </motion.div>
             )}
         </AnimatePresence>
     )
 }
+

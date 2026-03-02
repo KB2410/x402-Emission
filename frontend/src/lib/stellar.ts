@@ -116,25 +116,18 @@ export function formatExpiry(timestamp: number): string {
     return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
-// Wallet connection functions - now with demo mode support
+// Wallet connection functions - using official @stellar/freighter-api
+import {
+    isConnected,
+    requestAccess,
+    getPublicKey as getFreighterPublicKey,
+    signTransaction as signFreighterTx
+} from '@stellar/freighter-api'
+
 export async function isFreighterInstalled(): Promise<boolean> {
     if (DEMO_MODE) return true
-
     if (typeof window === 'undefined') return false
-
-    // Diagnostic logging to help debug SES/Lockdown issues
-    const hasApi = !!(window as any).freighterApi
-    const hasLegacy = !!(window as any).freighter
-
-    if (!hasApi && !hasLegacy) {
-        console.log('[Stellar Lib] Freighter not detected yet. Global keys check:', {
-            freighterApi: hasApi,
-            freighter: hasLegacy,
-            windowKeys: Object.keys(window).filter(k => k.toLowerCase().includes('freight'))
-        })
-    }
-
-    return hasApi || hasLegacy
+    return await isConnected()
 }
 
 export async function connectFreighter(): Promise<string | null> {
@@ -143,29 +136,12 @@ export async function connectFreighter(): Promise<string | null> {
             return DEMO_ACCOUNT.publicKey
         }
 
-        // More aggressive polling check (up to 2 seconds)
-        let installed = await isFreighterInstalled()
-        let retries = 0
-        while (!installed && retries < 4) {
-            await new Promise(r => setTimeout(r, 500))
-            installed = await isFreighterInstalled()
-            retries++
+        if (await isConnected()) {
+            const publicKey = await requestAccess()
+            return publicKey
         }
 
-        if (!installed) {
-            throw new Error('Freighter wallet not found. Please ensure the extension is enabled and refresh the page.')
-        }
-
-        // Give extension one more moment to fully initialize
-        await new Promise(r => setTimeout(r, 500))
-        
-        // Request access to the wallet
-        const api = (window as any).freighterApi || (window as any).freighter
-        if (!api) {
-            throw new Error('Freighter API vanished during connection attempt')
-        }
-        const publicKey = await api.requestAccess()
-        return publicKey
+        throw new Error('Wallet not found. Please install a compatible Stellar wallet.')
     } catch (error) {
         console.error('Error connecting to Freighter:', error)
         throw error
@@ -213,11 +189,7 @@ export async function getNetwork(): Promise<string | null> {
 export async function signTransaction(xdr: string): Promise<string | null> {
     try {
         if (DEMO_MODE) return xdr
-
-        const api = (window as any).freighterApi || (window as any).freighter
-        if (!api) return null
-
-        return await api.signTransaction(xdr)
+        return await signFreighterTx(xdr, { network: NETWORK })
     } catch (error) {
         console.error('Error signing transaction:', error)
         return null
@@ -349,17 +321,19 @@ function toScVal(value: any): xdr.ScVal {
 // Contract interaction functions
 export async function getOpenOptions(): Promise<EmissionOption[]> {
     try {
-        // If no contract address is configured, use mock data
         if (!CONTRACTS.EMISSION_OPTION || CONTRACTS.EMISSION_OPTION === '') {
-            console.info('📊 Using mock data: No emission option contract configured')
-            return getMockOptions()
+            if (DEMO_MODE) {
+                console.info('🛠️ Using mock data: No emission option contract configured')
+                return getMockOptions()
+            }
+            throw new Error('Contract address is missing. Please check .env.local')
         }
 
         const result = await queryContract(CONTRACTS.EMISSION_OPTION, 'get_open_options')
 
         if (!result || !Array.isArray(result)) {
-            console.info('📊 Using mock data: Contract returned no options or needs initialization')
-            return getMockOptions() // Fallback to mock data
+            if (DEMO_MODE) return getMockOptions()
+            return [] // Return empty array instead of fake data in production
         }
 
         return result.map((option: any) => ({
@@ -378,8 +352,12 @@ export async function getOpenOptions(): Promise<EmissionOption[]> {
             createdAt: Number(option.created_at),
         }))
     } catch (error) {
-        console.info('📊 Using mock data: Contract query failed')
-        return getMockOptions() // Fallback to mock data
+        if (DEMO_MODE) {
+            console.info('🛠️ Using mock data: Contract query failed')
+            return getMockOptions()
+        }
+        console.error('Failed to fetch open options:', error)
+        throw error
     }
 }
 
@@ -453,7 +431,7 @@ export async function buyOption(optionId: number, userPublicKey: string): Promis
         return hash
     } catch (error) {
         console.error('Error buying option:', error)
-        
+
         // Provide user-friendly error messages
         if (error instanceof Error) {
             if (error.message.includes('Error(Contract, #5)')) {
@@ -466,7 +444,7 @@ export async function buyOption(optionId: number, userPublicKey: string): Promis
                 throw new Error('Insufficient payment. Please ensure you have enough XLM to cover the premium.')
             }
         }
-        
+
         throw error
     }
 }
@@ -513,7 +491,7 @@ export async function writeOption(
         return hash
     } catch (error) {
         console.error('Error writing option:', error)
-        
+
         // Provide user-friendly error messages
         if (error instanceof Error) {
             if (error.message.includes('Error(Contract, #1)')) {
@@ -528,7 +506,7 @@ export async function writeOption(
                 throw new Error('Token transfer failed. Please ensure you have approved the contract and have sufficient balance.')
             }
         }
-        
+
         throw error
     }
 }
@@ -552,17 +530,19 @@ export async function exerciseOption(optionId: number, userPublicKey: string): P
 // AMM Contract Functions
 export async function getActivePools(): Promise<OptionsPool[]> {
     try {
-        // If no contract address is configured, use mock data
         if (!CONTRACTS.OPTIONS_AMM || CONTRACTS.OPTIONS_AMM === '') {
-            console.info('📊 Using mock data: No options AMM contract configured')
-            return getMockPools()
+            if (DEMO_MODE) {
+                console.info('🛠️ Using mock data: No options AMM contract configured')
+                return getMockPools()
+            }
+            throw new Error('AMM contract address is missing. Please check .env.local')
         }
 
         const result = await queryContract(CONTRACTS.OPTIONS_AMM, 'get_active_pools')
 
         if (!result || !Array.isArray(result)) {
-            console.info('📊 Using mock data: Contract returned no pools or needs initialization')
-            return getMockPools() // Fallback to mock data
+            if (DEMO_MODE) return getMockPools()
+            return [] // Return empty array instead of fake data in production
         }
 
         return result.map((pool: any) => ({
@@ -577,8 +557,12 @@ export async function getActivePools(): Promise<OptionsPool[]> {
             isActive: Boolean(pool.is_active),
         }))
     } catch (error) {
-        console.info('📊 Using mock data: Contract query failed')
-        return getMockPools() // Fallback to mock data
+        if (DEMO_MODE) {
+            console.info('🛠️ Using mock data: Contract query failed')
+            return getMockPools()
+        }
+        console.error('Failed to fetch active pools:', error)
+        throw error
     }
 }
 
@@ -666,7 +650,7 @@ export async function addLiquidity(
         return hash
     } catch (error) {
         console.error('Error adding liquidity:', error)
-        
+
         // Provide user-friendly error messages
         if (error instanceof Error) {
             if (error.message.includes('UnreachableCodeReached') || error.message.includes('PoolNotFound')) {
@@ -677,7 +661,7 @@ export async function addLiquidity(
                 throw new Error('Insufficient XLM balance. Please ensure you have enough XLM to add liquidity.')
             }
         }
-        
+
         throw error
     }
 }
